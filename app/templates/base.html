@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}An Bình Chemtech - Nội bộ{% endblock %}</title>
+{% block head %}{% endblock %}
+<style>
+  :root { --brand:#0b4f8a; --muted:#667; --line:#dde3ea; --bg:#f6f8fb; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin:0; background:var(--bg); color:#1c2430; }
+  header { background:var(--brand); color:#fff; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  header a { color:#fff; text-decoration:none; font-weight:600; }
+  header form { display:inline; }
+  main { max-width:1100px; margin:20px auto; padding:0 16px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:8px; padding:16px 20px; margin-bottom:16px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { background:#eef2f7; font-weight:600; }
+  td.num, th.num { text-align:right; }
+  input, select, textarea { font:inherit; padding:5px 7px; border:1px solid #bcc6d2; border-radius:4px; width:100%; }
+  button, .btn { font:inherit; background:var(--brand); color:#fff; border:0; border-radius:4px; padding:7px 14px; cursor:pointer; text-decoration:none; display:inline-block; }
+  .btn.secondary, button.secondary { background:#fff; color:var(--brand); border:1px solid var(--brand); }
+  .muted { color:var(--muted); font-size:.9em; }
+  .badge { padding:2px 8px; border-radius:10px; font-size:.85em; font-weight:600; }
+  .PENDING { background:#fff4d6; color:#8a6100; } .PROCESSING { background:#dcecff; color:#0b4f8a; }
+  .DONE { background:#dcf5e3; color:#16693a; } .FAILED { background:#fde2e2; color:#a11d1d; }
+  .errors { background:#fde2e2; color:#a11d1d; border-radius:6px; padding:10px 16px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:10px 20px; }
+  label { display:block; font-size:.9em; color:var(--muted); margin-bottom:3px; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
+  .on { background:#22a55a; } .off { background:#c33; }
+  .scroll { overflow-x:auto; }
+</style>
+</head>
+<body>
+<header>
+  <a href="/">An Bình Chemtech · Hệ thống quản lý nội bộ</a>
+  {% if user %}<span>{{ user.full_name }} ({{ user.role }})
+    <form method="post" action="/logout"><button class="secondary" style="padding:3px 10px">Đăng xuất</button></form></span>{% endif %}
+</header>
+<main>
+{% if agent %}<p class="muted"><span class="dot {{ 'on' if agent.online else 'off' }}"></span>Mac mini agent: {{ agent.text }}</p>{% endif %}
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>

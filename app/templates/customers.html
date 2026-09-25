@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Khách hàng</h2>
+  <div class="scroll"><table>
+    <tr><th>Mã</th><th>Tên khách hàng</th><th>MST</th><th>Liên hệ</th></tr>
+    {% for c in customers %}
+    <tr><td>{{ c.code }}</td><td><a href="/customers/{{ c.id }}">{{ c.name }}</a></td><td>{{ c.tax_code }}</td><td>{{ c.contact_name }}</td></tr>
+    {% else %}<tr><td colspan="4" class="muted">Không có khách hàng nào được phân công.</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}

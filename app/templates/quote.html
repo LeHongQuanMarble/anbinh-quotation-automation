@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block head %}{% if q.status in ('PENDING', 'PROCESSING') %}<meta http-equiv="refresh" content="3">{% endif %}{% endblock %}
+{% block content %}
+<p><a href="/customers/{{ q.customer_id }}">← {{ q.customer_name }}</a></p>
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <h2 style="margin:0">Báo giá {{ q.quote_no }} <span class="badge {{ q.status }}">{{ STATUS_LABELS[q.status] }}</span></h2>
+    <div>
+      {% if q.status == 'DONE' %}<a class="btn" href="/quotes/{{ q.id }}/download">⬇ Tải file báo giá (.docx)</a>{% endif %}
+      {% if q.status == 'FAILED' %}<form method="post" action="/quotes/{{ q.id }}/retry" style="display:inline"><button>Chạy lại</button></form>{% endif %}
+    </div>
+  </div>
+  <p class="muted">Lần thử: {{ q.attempts }}/{{ q.max_attempts }}{% if q.worker_id %} · đang xử lý bởi {{ q.worker_id }}{% endif %}
+    {% if q.status in ('PENDING', 'PROCESSING') %} · trang tự làm mới mỗi 3 giây{% endif %}</p>
+  {% if q.status == 'PENDING' and not agent.online %}<p class="errors">Mac mini hiện không kết nối. Yêu cầu vẫn được giữ trong hàng đợi và sẽ tự xử lý khi Mac mini online trở lại.</p>{% endif %}
+  {% if q.error %}<p class="errors">{{ q.error }}</p>{% endif %}
+</div>
+
+{% if review %}
+<div class="card">
+  <h3>Kiểm tra bổ sung (AI review - chỉ mang tính tham khảo)</h3>
+  <p class="muted">Nguồn: {{ review.source }}. Kết quả này không thay đổi nội dung file; nhân viên kinh doanh quyết định có gửi báo giá hay không.</p>
+  {% if review.warnings %}<ul>{% for w in review.warnings %}<li>⚠ {{ w }}</li>{% endfor %}</ul>
+  {% else %}<p>✔ Không phát hiện điểm bất thường.</p>{% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>Dữ liệu đã gửi</h3>
+  <div class="scroll"><table>
+    <tr><th>#</th><th>Tên hàng</th><th>Quy cách</th><th>ĐVT</th><th class="num">SL</th><th class="num">Đơn giá</th><th class="num">Thành tiền</th></tr>
+    {% for it in p['items'] %}
+    <tr><td>{{ it.no }}</td><td>{{ it.name }}</td><td>{{ it.spec }}</td><td>{{ it.unit }}</td><td class="num">{{ it.quantity }}</td>
+        <td class="num">{{ it.unit_price|vnd }}</td><td class="num">{{ it.amount|vnd }}</td></tr>
+    {% endfor %}
+    <tr><td colspan="6" class="num">Tạm tính</td><td class="num">{{ p.subtotal|vnd }}</td></tr>
+    <tr><td colspan="6" class="num">VAT {{ p.vat_rate }}%</td><td class="num">{{ p.vat_amount|vnd }}</td></tr>
+    <tr><td colspan="6" class="num"><b>Tổng cộng</b></td><td class="num"><b>{{ p.total|vnd }}</b></td></tr>
+  </table></div>
+  <div class="grid" style="margin-top:12px">
+    <div><label>Thanh toán</label>{{ p.payment_terms }}</div>
+    <div><label>Giao hàng</label>{{ p.delivery_terms }}</div>
+    <div><label>Thời gian giao</label>{{ p.delivery_time }}</div>
+    <div><label>Hiệu lực</label>{{ p.validity_days }} ngày</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Nhật ký xử lý</h3>
+  <table>{% for e in events %}<tr><td class="muted" style="width:170px">{{ e.at|dt }}</td><td>{{ e.level }}</td><td>{{ e.message }}</td></tr>{% endfor %}</table>
+</div>
+{% endblock %}

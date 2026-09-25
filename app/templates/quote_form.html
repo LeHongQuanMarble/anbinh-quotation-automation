@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/customers/{{ c.id }}">← {{ c.name }}</a></p>
+<form method="post" action="/customers/{{ c.id }}/quotes" id="qform">
+<input type="hidden" name="idempotency_key" value="{{ idem_key }}">
+<div class="card">
+  <h2>Tạo báo giá cho {{ c.name }}</h2>
+  {% if errors %}<div class="errors"><b>Vui lòng kiểm tra lại:</b><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+  <p class="muted">Khách hàng: {{ c.code }} · MST {{ c.tax_code }} · {{ c.address }}</p>
+  <div class="scroll"><table>
+    <tr><th style="width:170px">Sản phẩm</th><th>Tên hàng</th><th>Quy cách</th><th style="width:70px">ĐVT</th>
+        <th style="width:100px" class="num">Số lượng</th><th style="width:120px" class="num">Đơn giá (VND)</th><th class="num" style="width:130px">Thành tiền</th></tr>
+    {% for i in rows %}
+    <tr>
+      <td><select name="sku_{{ i }}" data-row="{{ i }}" class="sku">
+        <option value="">-- chọn --</option>
+        {% for p in products %}<option value="{{ p.sku }}" {% if v['sku_%d'|format(i)] == p.sku %}selected{% endif %}>{{ p.sku }}</option>{% endfor %}
+      </select></td>
+      <td><input name="name_{{ i }}" id="name_{{ i }}" value="{{ v['name_%d'|format(i)] }}"></td>
+      <td><input name="spec_{{ i }}" id="spec_{{ i }}" value="{{ v['spec_%d'|format(i)] }}"></td>
+      <td><input name="unit_{{ i }}" id="unit_{{ i }}" value="{{ v['unit_%d'|format(i)] }}"></td>
+      <td><input name="qty_{{ i }}" id="qty_{{ i }}" inputmode="decimal" value="{{ v['qty_%d'|format(i)] }}" class="calc"></td>
+      <td><input name="price_{{ i }}" id="price_{{ i }}" inputmode="numeric" value="{{ v['price_%d'|format(i)] }}" class="calc"></td>
+      <td class="num" id="amount_{{ i }}"></td>
+    </tr>
+    {% endfor %}
+  </table></div>
+  <p class="muted">Để trống các dòng không dùng. Chọn mã sản phẩm sẽ tự điền tên, quy cách và giá niêm yết (có thể sửa).</p>
+</div>
+<div class="card grid">
+  <div><label>Thuế VAT (%)</label><select name="vat_rate" id="vat_rate">
+    {% for r in [10, 8, 5, 0] %}<option value="{{ r }}" {% if v.vat_rate|default('10') == r|string %}selected{% endif %}>{{ r }}%</option>{% endfor %}
+  </select></div>
+  <div><label>Hiệu lực báo giá (ngày)</label><input name="validity_days" value="{{ v.validity_days|default('15') }}"></div>
+  <div><label>Điều kiện thanh toán *</label><input name="payment_terms" value="{{ v.payment_terms|default('Chuyển khoản 100% trong vòng 30 ngày kể từ ngày giao hàng') }}"></div>
+  <div><label>Điều kiện giao hàng *</label><input name="delivery_terms" value="{{ v.delivery_terms|default('Giao tại kho bên mua, chi phí vận chuyển do bên bán chịu') }}"></div>
+  <div><label>Thời gian giao hàng</label><input name="delivery_time" value="{{ v.delivery_time|default('3-5 ngày làm việc sau khi xác nhận đơn hàng') }}"></div>
+  <div style="grid-column:1/-1"><label>Ghi chú</label><textarea name="notes" rows="3">{{ v.notes }}</textarea></div>
+</div>
+<div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+  <div>Tạm tính: <b id="subtotal">0</b> · VAT: <b id="vat">0</b> · <span style="font-size:1.15em">Tổng: <b id="total">0</b> VND</span>
+    <div class="muted">Số liệu hiển thị để tham khảo; tổng chính thức do server tính lại.</div></div>
+  <button id="submit">Gửi yêu cầu tạo báo giá</button>
+</div>
+</form>
+<script>
+const PRODUCTS = {{ products_json|safe }};
+const fmt = n => Math.round(n).toLocaleString('vi-VN');
+function recalc() {
+  let sub = 0;
+  for (let i = 1; i <= {{ rows|length }}; i++) {
+    const q = parseFloat(document.getElementById('qty_' + i).value.replace(',', '.')) || 0;
+    const p = parseFloat(document.getElementById('price_' + i).value.replace(/[.,]/g, '')) || 0;
+    document.getElementById('amount_' + i).textContent = q && p ? fmt(q * p) : '';
+    sub += Math.round(q * p);
+  }
+  const vat = Math.round(sub * parseInt(document.getElementById('vat_rate').value) / 100);
+  document.getElementById('subtotal').textContent = fmt(sub);
+  document.getElementById('vat').textContent = fmt(vat);
+  document.getElementById('total').textContent = fmt(sub + vat);
+}
+document.querySelectorAll('.sku').forEach(sel => sel.addEventListener('change', e => {
+  const i = e.target.dataset.row, p = PRODUCTS[e.target.value];
+  if (!p) return;
+  document.getElementById('name_' + i).value = p.name;
+  document.getElementById('spec_' + i).value = p.spec;
+  document.getElementById('unit_' + i).value = p.unit;
+  document.getElementById('price_' + i).value = p.list_price;
+  recalc();
+}));
+document.querySelectorAll('.calc, #vat_rate').forEach(el => el.addEventListener('input', recalc));
+// Prevent accidental double submit (the server is idempotent anyway).
+document.getElementById('qform').addEventListener('submit', () => {
+  const b = document.getElementById('submit'); b.disabled = true; b.textContent = 'Đang gửi...';
+});
+recalc();
+</script>
+{% endblock %}

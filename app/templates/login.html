@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:380px;margin:60px auto">
+  <h2>Đăng nhập</h2>
+  {% if error %}<p class="errors">{{ error }}</p>{% endif %}
+  <form method="post" action="/login">
+    <label>Tài khoản</label><input name="username" required autofocus>
+    <label style="margin-top:10px">Mật khẩu</label><input name="password" type="password" required>
+    <p><button>Đăng nhập</button></p>
+  </form>
+  <p class="muted">Demo: sales1 / sales123 · sales2 / sales123 · admin / admin123</p>
+</div>
+{% endblock %}

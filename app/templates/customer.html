@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/">← Danh sách khách hàng</a></p>
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <h2 style="margin:0">{{ c.name }}</h2>
+    <a class="btn" href="/customers/{{ c.id }}/quotes/new">+ Tạo báo giá</a>
+  </div>
+  <div class="grid" style="margin-top:12px">
+    <div><label>Mã KH</label>{{ c.code }}</div>
+    <div><label>Mã số thuế</label>{{ c.tax_code }}</div>
+    <div><label>Địa chỉ</label>{{ c.address }}</div>
+    <div><label>Người liên hệ</label>{{ c.contact_name }} · {{ c.phone }}</div>
+    <div><label>Email</label>{{ c.email }}</div>
+  </div>
+</div>
+<div class="card">
+  <h3>Lịch sử báo giá</h3>
+  <div class="scroll"><table>
+    <tr><th>Số báo giá</th><th>Ngày tạo</th><th class="num">Tổng tiền (VND)</th><th>Trạng thái</th></tr>
+    {% for q in quotes %}
+    <tr><td><a href="/quotes/{{ q.id }}">{{ q.quote_no }}</a></td><td>{{ q.created_at|dt }}</td>
+        <td class="num">{{ q.total|vnd }}</td><td><span class="badge {{ q.status }}">{{ STATUS_LABELS[q.status] }}</span></td></tr>
+    {% else %}<tr><td colspan="4" class="muted">Chưa có báo giá.</td></tr>{% endfor %}
+  </table></div>
+</div>
+{% endblock %}
